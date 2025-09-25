@@ -1386,7 +1386,7 @@
             </div>
         </section>
 
-      <!-- Replace your contact section with this corrected version -->
+  <!-- Replace your contact section with this version -->
 <section class="contact section-padding" id="contact">
     <div class="container">
         <h2 class="section-title">Get In Touch</h2>
@@ -1420,8 +1420,8 @@
             
             <div class="contact-form">
                 <h3>Send a Message</h3>
-                <!-- Corrected Form with proper Netlify attributes -->
-                <form name="contact" method="POST" netlify netlify-honeypot="bot-field">
+                <!-- Modified Form with AJAX submission -->
+                <form name="contact" id="contact-form" netlify>
                     <input type="hidden" name="form-name" value="contact" />
                     <p class="hidden">
                         <label>Don't fill this out if you're human: <input name="bot-field" /></label>
@@ -1554,39 +1554,71 @@
         });
     </script>
 
-    <script>
-    // Replace your existing contact form JavaScript with this corrected version
+   <script>
+    // Replace your contact form JavaScript with this version
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form[name="contact"]');
+        const form = document.getElementById('contact-form');
         const formStatus = document.getElementById('form-status');
         
         if (form) {
-            // Let Netlify handle the form submission naturally
             form.addEventListener('submit', function(event) {
-                // Optional: Add client-side validation
+                event.preventDefault();
+                
+                // Validate form
                 if (!validateForm()) {
-                    event.preventDefault();
                     return;
                 }
                 
-                // Show loading state (optional enhancement)
+                // Show loading state
                 const submitBtn = form.querySelector('button[type="submit"]');
                 const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = 'Sending... <i class="fas fa-spinner fa-spin"></i>';
                 submitBtn.disabled = true;
                 
-                // Netlify will handle the submission automatically
-                // We'll just show a temporary message
-                setTimeout(() => {
-                    formStatus.innerHTML = '<div class="success-checkmark"><i class="fas fa-check-circle"></i></div> Sending your message...';
-                    formStatus.className = 'form-status success';
-                }, 100);
+                // Prepare form data for submission
+                const formData = new FormData(form);
                 
-                // Re-enable button after 5 seconds in case submission fails
-                setTimeout(() => {
+                // Submit to Netlify using fetch API
+                fetch('/', {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams(formData).toString()
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Success
+                        formStatus.innerHTML = '<div class="success-checkmark"><i class="fas fa-check-circle"></i></div> Thank you! Your message has been sent successfully.';
+                        formStatus.className = 'form-status success';
+                        
+                        // Reset form
+                        form.reset();
+                        
+                        // Hide success message after 5 seconds
+                        setTimeout(() => {
+                            formStatus.className = 'form-status';
+                            formStatus.innerHTML = '';
+                        }, 5000);
+                    } else {
+                        // Error
+                        throw new Error('Network response was not ok.');
+                    }
+                })
+                .catch(error => {
+                    // Error handling
+                    formStatus.innerHTML = 'Sorry, there was an error sending your message. Please try again or contact me directly at ejoel2789@gmail.com.';
+                    formStatus.className = 'form-status error';
+                    
+                    // Hide error message after 5 seconds
+                    setTimeout(() => {
+                        formStatus.className = 'form-status';
+                        formStatus.innerHTML = '';
+                    }, 5000);
+                })
+                .finally(() => {
+                    // Reset button state
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
-                }, 5000);
+                });
             });
             
             function validateForm() {
@@ -1615,25 +1647,10 @@
                 });
             });
         }
-        
-        // Check if there's a success parameter in the URL (Netlify redirect)
-        if (window.location.search.includes('success=true')) {
-            const formStatus = document.getElementById('form-status');
-            if (formStatus) {
-                formStatus.innerHTML = '<div class="success-checkmark"><i class="fas fa-check-circle"></i></div> Thank you! Your message has been sent successfully.';
-                formStatus.className = 'form-status success';
-                
-                // Clear the form
-                const form = document.querySelector('form[name="contact"]');
-                if (form) form.reset();
-                
-                // Remove the success parameter from URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        }
     });
 </script>
 </body>
 
 
 </html>
+
